@@ -25,6 +25,7 @@ const THREAD_LIST_LIMIT = 100;
 const POST_LIST_LIMIT = 1000;
 
 const BOARDS = [
+  { slug: "free", name: "自由", description: "テーマを問わない何でも自由な板(※NGワード等のルールは他の板と共通です)" },
   { slug: "chat", name: "雑談", description: "なんでも雑談板" },
   { slug: "youtube", name: "YouTube・動画", description: "YouTubeや動画配信の話題" },
   { slug: "game", name: "ゲーム", description: "ゲーム全般の話題" },
