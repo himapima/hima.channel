@@ -84,6 +84,7 @@ document.getElementById("new-thread-form").addEventListener("submit", async (ev)
   statusEl.className = "form-status";
   try {
     const res = await apiPost(`/api/boards/${encodeURIComponent(boardSlug)}/threads`, { title, name, body, honeypot });
+    if (res.delete_token) saveDeleteToken(`thread_${res.id}`, res.delete_token);
     location.href = `thread.html?id=${res.id}`;
   } catch (e) {
     statusEl.textContent = e.message;

@@ -15,7 +15,8 @@ CREATE TABLE IF NOT EXISTS posts (
   name TEXT NOT NULL,
   body TEXT NOT NULL,
   created_at TEXT NOT NULL,
-  ip_hash TEXT
+  ip_hash TEXT,
+  delete_token_hash TEXT
 );
 
 CREATE INDEX IF NOT EXISTS idx_posts_thread ON posts(thread_id, created_at ASC);

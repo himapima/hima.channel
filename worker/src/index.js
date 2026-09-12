@@ -72,10 +72,23 @@ function json(data, status, extraHeaders) {
   });
 }
 
-async function hashIp(ip, salt) {
-  const enc = new TextEncoder().encode(`${salt}:${ip}`);
+async function sha256Hex(text) {
+  const enc = new TextEncoder().encode(text);
   const digest = await crypto.subtle.digest("SHA-256", enc);
   return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function hashIp(ip, salt) {
+  return sha256Hex(`${salt}:${ip}`);
+}
+
+function randomDeleteToken() {
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  return Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function hashDeleteToken(token, salt) {
+  return sha256Hex(`${salt}:delete:${token}`);
 }
 
 function escapeHtml(s) {
@@ -186,6 +199,8 @@ export default {
       const safeTitle = escapeHtml(title);
       const safeName = escapeHtml(name);
       const safeText = escapeHtml(text);
+      const deleteToken = randomDeleteToken();
+      const deleteTokenHash = await hashDeleteToken(deleteToken, env.IP_SALT);
 
       const thread = await env.DB.prepare(
         "INSERT INTO threads (board_slug, title, post_count, created_at, last_reply_at) VALUES (?, ?, 1, ?, ?) RETURNING id"
@@ -194,12 +209,12 @@ export default {
         .first();
 
       await env.DB.prepare(
-        "INSERT INTO posts (thread_id, name, body, created_at, ip_hash) VALUES (?, ?, ?, ?, ?)"
+        "INSERT INTO posts (thread_id, name, body, created_at, ip_hash, delete_token_hash) VALUES (?, ?, ?, ?, ?, ?)"
       )
-        .bind(thread.id, safeName, safeText, now, ipHash)
+        .bind(thread.id, safeName, safeText, now, ipHash, deleteTokenHash)
         .run();
 
-      return json({ id: thread.id, title: safeTitle }, 201, headers);
+      return json({ id: thread.id, title: safeTitle, delete_token: deleteToken }, 201, headers);
     }
 
     // GET /api/threads/:id
@@ -256,11 +271,13 @@ export default {
       const now = new Date().toISOString();
       const safeName = escapeHtml(name);
       const safeText = escapeHtml(text);
+      const deleteToken = randomDeleteToken();
+      const deleteTokenHash = await hashDeleteToken(deleteToken, env.IP_SALT);
 
       const post = await env.DB.prepare(
-        "INSERT INTO posts (thread_id, name, body, created_at, ip_hash) VALUES (?, ?, ?, ?, ?) RETURNING id"
+        "INSERT INTO posts (thread_id, name, body, created_at, ip_hash, delete_token_hash) VALUES (?, ?, ?, ?, ?, ?) RETURNING id"
       )
-        .bind(threadId, safeName, safeText, now, ipHash)
+        .bind(threadId, safeName, safeText, now, ipHash, deleteTokenHash)
         .first();
 
       await env.DB.prepare(
@@ -269,7 +286,11 @@ export default {
         .bind(now, threadId)
         .run();
 
-      return json({ id: post.id, name: safeName, body: safeText, created_at: now }, 201, headers);
+      return json(
+        { id: post.id, name: safeName, body: safeText, created_at: now, delete_token: deleteToken },
+        201,
+        headers
+      );
     }
 
     // POST /api/reports (削除依頼・通報の受付。管理者がGET /api/reportsで確認する)
@@ -306,26 +327,70 @@ export default {
       return json({ reports: results }, 200, headers);
     }
 
-    // DELETE /api/threads/:id (管理者用)
+    // DELETE /api/threads/:id (管理者、またはスレ主の削除キーで削除可能)
     m = url.pathname.match(/^\/api\/threads\/(\d+)$/);
     if (m && request.method === "DELETE") {
+      const threadId = m[1];
       const adminToken = request.headers.get("X-Admin-Token") || "";
-      if (!env.ADMIN_TOKEN || adminToken !== env.ADMIN_TOKEN) {
-        return json({ error: "unauthorized" }, 401, headers);
+      const isAdmin = !!env.ADMIN_TOKEN && adminToken === env.ADMIN_TOKEN;
+
+      if (!isAdmin) {
+        const body = await request.json().catch(() => ({}));
+        const deleteToken = (body.delete_token || "").toString();
+        const opPost = await env.DB.prepare(
+          "SELECT delete_token_hash FROM posts WHERE thread_id = ? ORDER BY created_at ASC, id ASC LIMIT 1"
+        )
+          .bind(threadId)
+          .first();
+        const opHash = opPost ? await hashDeleteToken(deleteToken, env.IP_SALT) : null;
+        if (!opPost || !deleteToken || opHash !== opPost.delete_token_hash) {
+          return json({ error: "unauthorized" }, 401, headers);
+        }
       }
-      await env.DB.prepare("DELETE FROM posts WHERE thread_id = ?").bind(m[1]).run();
-      await env.DB.prepare("DELETE FROM threads WHERE id = ?").bind(m[1]).run();
+
+      await env.DB.prepare("DELETE FROM posts WHERE thread_id = ?").bind(threadId).run();
+      await env.DB.prepare("DELETE FROM threads WHERE id = ?").bind(threadId).run();
       return json({ ok: true }, 200, headers);
     }
 
-    // DELETE /api/posts/:id (管理者用)
+    // DELETE /api/posts/:id (管理者、または投稿者本人の削除キーで削除可能)
+    // そのスレッドの最初の投稿(スレ主)を削除した場合はスレッドごと削除する。
     m = url.pathname.match(/^\/api\/posts\/(\d+)$/);
     if (m && request.method === "DELETE") {
+      const postId = m[1];
       const adminToken = request.headers.get("X-Admin-Token") || "";
-      if (!env.ADMIN_TOKEN || adminToken !== env.ADMIN_TOKEN) {
-        return json({ error: "unauthorized" }, 401, headers);
+      const isAdmin = !!env.ADMIN_TOKEN && adminToken === env.ADMIN_TOKEN;
+
+      const post = await env.DB.prepare("SELECT id, thread_id, delete_token_hash FROM posts WHERE id = ?")
+        .bind(postId)
+        .first();
+      if (!post) return json({ error: "post not found" }, 404, headers);
+
+      if (!isAdmin) {
+        const body = await request.json().catch(() => ({}));
+        const deleteToken = (body.delete_token || "").toString();
+        const hash = deleteToken ? await hashDeleteToken(deleteToken, env.IP_SALT) : null;
+        if (!deleteToken || hash !== post.delete_token_hash) {
+          return json({ error: "unauthorized" }, 401, headers);
+        }
       }
-      await env.DB.prepare("DELETE FROM posts WHERE id = ?").bind(m[1]).run();
+
+      const opPost = await env.DB.prepare(
+        "SELECT id FROM posts WHERE thread_id = ? ORDER BY created_at ASC, id ASC LIMIT 1"
+      )
+        .bind(post.thread_id)
+        .first();
+
+      if (opPost && Number(opPost.id) === Number(post.id)) {
+        await env.DB.prepare("DELETE FROM posts WHERE thread_id = ?").bind(post.thread_id).run();
+        await env.DB.prepare("DELETE FROM threads WHERE id = ?").bind(post.thread_id).run();
+        return json({ ok: true, thread_deleted: true }, 200, headers);
+      }
+
+      await env.DB.prepare("DELETE FROM posts WHERE id = ?").bind(postId).run();
+      await env.DB.prepare("UPDATE threads SET post_count = post_count - 1 WHERE id = ?")
+        .bind(post.thread_id)
+        .run();
       return json({ ok: true }, 200, headers);
     }
 

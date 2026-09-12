@@ -42,11 +42,17 @@
 <script src="api.js"></script>
 <script>
 const threadId = qs("id");
+let boardSlugCache = "";
 
 function renderPosts(posts) {
   document.getElementById("posts").innerHTML = posts
-    .map(
-      (p, i) => `<li class="post">
+    .map((p, i) => {
+      const tokenKey = i === 0 ? `thread_${threadId}` : p.id;
+      const myToken = getDeleteToken(tokenKey);
+      const deleteBtn = myToken
+        ? `<button class="post-report" data-post-id="${p.id}" data-token-key="${tokenKey}">自分で削除する</button>`
+        : "";
+      return `<li class="post">
         <div class="post-head">
           <span class="post-no">${i + 1}</span>
           <span class="post-name">${p.name}</span>
@@ -54,11 +60,25 @@ function renderPosts(posts) {
         </div>
         <div class="post-body">${p.body}</div>
         <button class="post-report" data-post-id="${p.id}">通報する</button>
-      </li>`
-    )
+        ${deleteBtn}
+      </li>`;
+    })
     .join("");
 
-  document.querySelectorAll(".post-report").forEach((btn) => {
+  document.querySelectorAll(".post-report[data-token-key]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      if (!confirm("この投稿を削除します。よろしいですか?")) return;
+      const token = getDeleteToken(btn.dataset.tokenKey);
+      try {
+        await apiDelete(`/api/posts/${btn.dataset.postId}`, { delete_token: token });
+        location.href = `board.html?b=${boardSlugCache || ""}`;
+      } catch (e) {
+        alert("削除に失敗しました(すでに削除されているか、削除キーが一致しません)。");
+      }
+    });
+  });
+
+  document.querySelectorAll(".post-report:not([data-token-key])").forEach((btn) => {
     btn.addEventListener("click", async () => {
       const reason = prompt("通報理由を入力してください(削除依頼として運営に届きます)");
       if (reason === null) return;
@@ -79,6 +99,7 @@ async function loadThread() {
     document.getElementById("thread-title").textContent = thread.title;
     document.getElementById("board-link").textContent = board ? board.name : "板";
     document.getElementById("board-link").href = board ? `board.html?b=${board.slug}` : "index.html";
+    boardSlugCache = board ? board.slug : "";
     renderPosts(posts);
   } catch (e) {
     document.getElementById("thread-title").textContent = "スレッドが見つかりません";
@@ -95,7 +116,8 @@ document.getElementById("reply-form").addEventListener("submit", async (ev) => {
   statusEl.textContent = "投稿中...";
   statusEl.className = "form-status";
   try {
-    await apiPost(`/api/threads/${threadId}/posts`, { name, body, honeypot });
+    const res = await apiPost(`/api/threads/${threadId}/posts`, { name, body, honeypot });
+    if (res.delete_token) saveDeleteToken(res.id, res.delete_token);
     document.getElementById("body").value = "";
     statusEl.textContent = "";
     await loadThread();

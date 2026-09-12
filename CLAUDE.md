@@ -27,7 +27,8 @@
 
 - サイト: https://tigeregg80.github.io/anon-bbs/ (GitHubリポジトリ: https://github.com/tigeregg80/anon-bbs 、mainブランチ/docsフォルダをGitHub Pagesで配信)
 - API: https://anon-bbs.tigeregg80.workers.dev (Cloudflare Worker、D1データベース`anon-bbs`)
-- 板: 雑談・YouTube・動画・ゲーム・アニメ・漫画・スポーツ・ニュース・時事の6板(`worker/src/index.js`の`BOARDS`配列で管理。増やす場合はここに追記するだけでよい)
+- 板: 自由・雑談・YouTube・動画・ゲーム・アニメ・漫画・スポーツ・ニュース・時事の7板(`worker/src/index.js`の`BOARDS`配列で管理。増やす場合はここに追記するだけでよい)
+- **自分の投稿を自分で削除できる機能(2026-09-12追加)**: スレッド作成・レス投稿のレスポンスに`delete_token`(ランダムな削除キー)が1回だけ含まれ、投稿したブラウザの`localStorage`(`anon_bbs_delete_tokens`)に保存される。D1にはハッシュ化した値のみを保存(`posts.delete_token_hash`)。同じブラウザで見れば「自分で削除する」ボタンが投稿に表示され、`DELETE /api/posts/:id`に`{delete_token}`を渡せば管理者トークンなしで削除できる。スレッドの最初の投稿(スレ主)を削除した場合はスレッドごと削除される。別のブラウザ・別端末からは削除できない(localStorageが無いため)ので、その場合は引き続き通報→管理者削除の流れになる。
 - 自動投稿・自動生成の仕組みは無い(他プロジェクトと違い、コンテンツはすべて訪問者が自由に書き込む)。「運営」の中身は主にモデレーション(NGワードのすり抜け・通報の確認・悪質な投稿の削除)。
 
 ## 重要な安全上の制約(絶対に変更しない)
