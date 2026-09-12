@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title id="page-title">板 | ぴまスレッド</title>
+<title id="page-title">板 | ぴまチャンネル</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div class="wrap">
   <header class="site-header">
-    <a class="site-title" href="index.html">ぴま<span>スレッド</span></a>
+    <a class="site-title" href="index.html">ぴま<span>チャンネル</span></a>
   </header>
   <div class="ad-slot">
     <span class="ad-slot-label">広告</span>
@@ -48,7 +48,7 @@
   </main>
   <footer class="site-footer">
     <p><a href="terms.html">利用規約・削除依頼について</a></p>
-    <p>&copy; 2026 ぴまスレッド</p>
+    <p>&copy; 2026 ぴまチャンネル</p>
   </footer>
 </div>
 <script src="api.js"></script>
@@ -59,7 +59,7 @@ async function loadThreads() {
   const listEl = document.getElementById("threads");
   try {
     const { board, threads } = await apiGet(`/api/boards/${encodeURIComponent(boardSlug)}/threads`);
-    document.title = `${board.name} | ぴまスレッド`;
+    document.title = `${board.name} | ぴまチャンネル`;
     document.getElementById("board-name").textContent = board.name;
 
     if (threads.length === 0) {

@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title id="page-title">スレッド | ぴまスレッド</title>
+<title id="page-title">スレッド | ぴまチャンネル</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div class="wrap">
   <header class="site-header">
-    <a class="site-title" href="index.html">ぴま<span>スレッド</span></a>
+    <a class="site-title" href="index.html">ぴま<span>チャンネル</span></a>
   </header>
   <div class="ad-slot">
     <span class="ad-slot-label">広告</span>
@@ -43,7 +43,7 @@
   </main>
   <footer class="site-footer">
     <p><a href="terms.html">利用規約・削除依頼について</a></p>
-    <p>&copy; 2026 ぴまスレッド</p>
+    <p>&copy; 2026 ぴまチャンネル</p>
   </footer>
 </div>
 <script src="api.js"></script>
@@ -102,7 +102,7 @@ function renderPosts(posts) {
 async function loadThread() {
   try {
     const { thread, board, posts } = await apiGet(`/api/threads/${threadId}`);
-    document.title = `${thread.title} | ぴまスレッド`;
+    document.title = `${thread.title} | ぴまチャンネル`;
     document.getElementById("thread-title").textContent = thread.title;
     document.getElementById("board-link").textContent = board ? board.name : "板";
     document.getElementById("board-link").href = board ? `board.html?b=${board.slug}` : "index.html";
