@@ -103,6 +103,9 @@ button:hover { opacity: .9; }
 .post-body { white-space: pre-wrap; word-break: break-word; }
 .post-report { font-size: .72rem; color: var(--text-muted); background: none; border: none; padding: 0; margin-top: 6px; text-decoration: underline; cursor: pointer; }
 
+.ad-slot { display: flex; flex-direction: column; align-items: center; gap: 4px; margin: 20px 0; }
+.ad-slot-label { font-size: .68rem; color: var(--text-muted); letter-spacing: .05em; }
+
 .site-footer { border-top: 1px solid var(--border); margin-top: 30px; padding-top: 16px; color: var(--text-muted); font-size: .8rem; text-align: center; }
 .site-footer a { color: var(--text-muted); }
 .empty-state { color: var(--text-muted); padding: 20px 0; }
