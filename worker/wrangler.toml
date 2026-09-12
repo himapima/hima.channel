@@ -8,4 +8,4 @@ database_name = "anon-bbs"
 database_id = "6bc84fa2-3d16-4781-a035-6beefb000183"
 
 [vars]
-ALLOWED_ORIGIN = "https://tigeregg80.github.io"
+ALLOWED_ORIGIN = "https://himapima.github.io"

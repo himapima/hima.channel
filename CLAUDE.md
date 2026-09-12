@@ -25,8 +25,8 @@
 
 ## 公開状況(2026-09-12時点)
 
-- サイト: https://tigeregg80.github.io/hima.channel/ (GitHubリポジトリ: https://github.com/tigeregg80/hima.channel 、mainブランチ/docsフォルダをGitHub Pagesで配信。2026-09-12にリポジトリ名を`anon-bbs`→`hima.channel`へ変更し、URLにサイト名が出るようにした)
-- API: https://anon-bbs.tigeregg80.workers.dev (Cloudflare Worker、D1データベース`anon-bbs`。こちらの名前はWorker側の内部名でURLには表示されないため未変更)
+- サイト: https://himapima.github.io/hima.channel/ (GitHubリポジトリ: https://github.com/himapima/hima.channel 、mainブランチ/docsフォルダをGitHub Pagesで配信。2026-09-12にリポジトリ名を`anon-bbs`→`hima.channel`へ変更し、URLにサイト名が出るようにした。同日中にGitHubユーザー名も`tigeregg80`→`himapima`へ再変更した)
+- API: https://anon-bbs.tigeregg80.workers.dev (Cloudflare Worker、D1データベース`anon-bbs`。こちらのサブドメインはCloudflareアカウント側の設定でGitHubユーザー名とは別物のため未変更)
 - 板: 自由・雑談・YouTube・動画・ゲーム・アニメ・漫画・スポーツ・ニュース・時事の7板(`worker/src/index.js`の`BOARDS`配列で管理。増やす場合はここに追記するだけでよい)
 - **自分の投稿を自分で削除できる機能(2026-09-12追加)**: スレッド作成・レス投稿のレスポンスに`delete_token`(ランダムな削除キー)が1回だけ含まれ、投稿したブラウザの`localStorage`(`anon_bbs_delete_tokens`)に保存される。D1にはハッシュ化した値のみを保存(`posts.delete_token_hash`)。同じブラウザで見れば「自分で削除する」ボタンが投稿に表示され、`DELETE /api/posts/:id`に`{delete_token}`を渡せば管理者トークンなしで削除できる。スレッドの最初の投稿(スレ主)を削除した場合はスレッドごと削除される。別のブラウザ・別端末からは削除できない(localStorageが無いため)ので、その場合は引き続き通報→管理者削除の流れになる。
 - 自動投稿・自動生成の仕組みは無い(他プロジェクトと違い、コンテンツはすべて訪問者が自由に書き込む)。「運営」の中身は主にモデレーション(NGワードのすり抜け・通報の確認・悪質な投稿の削除)。
@@ -57,7 +57,7 @@
 
 ## 判断方針: 無料 or 有料の選択肢がある場合
 
-2026-09-12、URLから`tigeregg80`(GitHubユーザー名)を消す方法として「有料の独自ドメイン」と「GitHubアカウント名の再変更(無料)」を提示したところ、ユーザーから「基本無料のほう」という明確な方針が示された。
+2026-09-12、URLから本名を推測させるGitHubユーザー名を消す方法として「有料の独自ドメイン」と「GitHubアカウント名の再変更(無料)」を提示したところ、ユーザーから「基本無料のほう」という明確な方針が示された(この方針に沿って`enupi80-droid`→`tigeregg80`→`himapima`と2回改名している)。
 
 **Why:** [[feedback_no_extra_billing]]と同じ考え方(追加課金NG)だが、APIの従量課金に限らず、ドメイン購入のような一般的な費用が発生する選択肢についても、無料の代替手段があれば無料側をデフォルトの提案・選択にする、という広い方針であることが明確になった。
 
@@ -70,4 +70,4 @@
 - D1データベースへのスキーマ反映: `cd worker && npx wrangler d1 execute anon-bbs --remote --file=./schema.sql`
 - Workerのデプロイ: `cd worker && npx wrangler deploy`
 - フロントエンドはビルド不要の素のHTML/CSS/JS。`docs/`を直接編集してpushすればGitHub Pagesに反映される。
-- **git commitの作者情報に注意**: このリポジトリは`git config user.email`を`325646763+tigeregg80@users.noreply.github.com`(GitHubのnoreplyアドレス)に設定してある。本名メールアドレスがコミット履歴に残らないようにするため、他のツールでこのリポジトリにコミットする際もこの設定を変更しないこと。
+- **git commitの作者情報に注意**: このリポジトリは`git config user.email`を`325646763+himapima@users.noreply.github.com`(GitHubのnoreplyアドレス、2026-09-12にGitHubユーザー名を`tigeregg80`→`himapima`へ変更したのに合わせて更新。数字のユーザーID部分は不変)に設定してある。本名メールアドレスがコミット履歴に残らないようにするため、他のツールでこのリポジトリにコミットする際もこの設定を変更しないこと。
