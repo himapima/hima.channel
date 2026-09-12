@@ -32,6 +32,11 @@ const BOARDS = [
   { slug: "anime", name: "アニメ・漫画", description: "アニメ・漫画の話題" },
   { slug: "sports", name: "スポーツ", description: "スポーツ全般の話題" },
   { slug: "news", name: "ニュース・時事", description: "ニュース・時事ネタの雑談" },
+  { slug: "soudan", name: "悩み相談", description: "人には言いにくい悩みを相談する板" },
+  { slug: "renai", name: "恋愛・人間関係", description: "恋愛や人間関係についての相談・雑談板" },
+  { slug: "music", name: "音楽", description: "音楽全般の話題" },
+  { slug: "movie", name: "映画・ドラマ", description: "映画・ドラマの話題" },
+  { slug: "gourmet", name: "料理・グルメ", description: "料理・グルメの話題" },
 ];
 
 // 違法・重大な迷惑行為につながる投稿を機械的にはじくための最低限のNGワード。
