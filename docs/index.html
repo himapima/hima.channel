@@ -36,13 +36,27 @@
   const el = document.getElementById("boards");
   try {
     const { boards } = await apiGet("/api/boards");
+
+    const latests = await Promise.all(
+      boards.map((b) =>
+        apiGet(`/api/boards/${encodeURIComponent(b.slug)}/threads`)
+          .then((res) => (res.threads && res.threads[0]) || null)
+          .catch(() => null)
+      )
+    );
+
     el.innerHTML = boards
-      .map(
-        (b) => `<a class="board-card" href="board.html?b=${encodeURIComponent(b.slug)}">
+      .map((b, i) => {
+        const latest = latests[i];
+        const latestHtml = latest
+          ? `<p class="board-card-latest">最新: ${latest.title}</p>`
+          : `<p class="board-card-latest board-card-latest-empty">まだスレッドがありません</p>`;
+        return `<a class="board-card" href="board.html?b=${encodeURIComponent(b.slug)}">
           <p class="board-card-name">${b.name}</p>
           <p class="board-card-desc">${b.description}</p>
-        </a>`
-      )
+          ${latestHtml}
+        </a>`;
+      })
       .join("");
   } catch (e) {
     el.innerHTML = `<p class="empty-state">読み込みに失敗しました。時間をおいて再度お試しください。</p>`;

@@ -59,6 +59,12 @@ header.site-header {
 .board-card:hover { border-color: var(--accent); }
 .board-card-name { font-weight: 700; margin-bottom: 4px; }
 .board-card-desc { font-size: .8rem; color: var(--text-muted); }
+.board-card-latest {
+  font-size: .76rem; color: var(--accent); margin-top: 10px; padding-top: 8px;
+  border-top: 1px solid var(--border);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.board-card-latest-empty { color: var(--text-muted); }
 
 .crumb { font-size: .85rem; color: var(--text-muted); margin-bottom: 14px; }
 .crumb a { color: var(--accent); text-decoration: none; }
