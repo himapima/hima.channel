@@ -60,6 +60,8 @@ header.site-header {
 .board-card-name { font-weight: 700; margin-bottom: 4px; }
 .board-card-desc { font-size: .8rem; color: var(--text-muted); }
 
+.section-title { font-size: 1rem; margin: 32px 0 12px; }
+
 .crumb { font-size: .85rem; color: var(--text-muted); margin-bottom: 14px; }
 .crumb a { color: var(--accent); text-decoration: none; }
 

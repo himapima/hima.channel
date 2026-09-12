@@ -24,6 +24,11 @@
     <div id="boards" class="board-grid">
       <p class="empty-state">読み込み中...</p>
     </div>
+
+    <h2 class="section-title">最新スレッド</h2>
+    <ul id="recent-threads" class="thread-list">
+      <li><a href="#">読み込み中...</a></li>
+    </ul>
   </main>
   <footer class="site-footer">
     <p><a href="terms.html">利用規約・削除依頼について</a></p>
@@ -46,6 +51,27 @@
       .join("");
   } catch (e) {
     el.innerHTML = `<p class="empty-state">読み込みに失敗しました。時間をおいて再度お試しください。</p>`;
+  }
+})();
+
+(async function () {
+  const el = document.getElementById("recent-threads");
+  try {
+    const { threads } = await apiGet("/api/threads/recent?limit=10");
+    if (threads.length === 0) {
+      el.innerHTML = `<li><p class="empty-state" style="padding:14px">まだスレッドがありません。</p></li>`;
+      return;
+    }
+    el.innerHTML = threads
+      .map(
+        (t) => `<li><a href="thread.html?id=${t.id}">
+          <span class="thread-title">${t.title}</span>
+          <span class="thread-meta">${t.board ? t.board.name : ""} ・ ${t.post_count}レス ・ ${fmtDate(t.last_reply_at)}</span>
+        </a></li>`
+      )
+      .join("");
+  } catch (e) {
+    el.innerHTML = `<li><p class="empty-state" style="padding:14px">読み込みに失敗しました。</p></li>`;
   }
 })();
 </script>

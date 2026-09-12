@@ -154,6 +154,18 @@ export default {
       return json({ boards: BOARDS }, 200, headers);
     }
 
+    // GET /api/threads/recent (サイト全体の最新スレッド、板をまたいで新着順)
+    if (url.pathname === "/api/threads/recent" && request.method === "GET") {
+      const limit = Math.min(Number(url.searchParams.get("limit")) || 10, 50);
+      const { results } = await env.DB.prepare(
+        "SELECT id, board_slug, title, post_count, last_reply_at FROM threads ORDER BY last_reply_at DESC LIMIT ?"
+      )
+        .bind(limit)
+        .all();
+      const withBoard = results.map((t) => ({ ...t, board: boardBySlug(t.board_slug) }));
+      return json({ threads: withBoard }, 200, headers);
+    }
+
     // GET /api/boards/:slug/threads
     let m = url.pathname.match(/^\/api\/boards\/([a-z0-9_-]+)\/threads$/);
     if (m && request.method === "GET") {
