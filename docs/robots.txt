@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://himapima.github.io/hima.channel/sitemap.xml
