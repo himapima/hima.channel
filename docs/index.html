@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ひまちゃんねる</title>
+<meta name="description" content="登録不要・匿名で自由に書き込める雑談掲示板「ひまちゃんねる」。">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="site-header">
+    <a class="site-title" href="index.html">ひま<span>ちゃんねる</span></a>
+    <p class="site-tagline">登録不要・匿名で自由に書き込める雑談掲示板</p>
+  </header>
+  <main>
+    <div id="boards" class="board-grid">
+      <p class="empty-state">読み込み中...</p>
+    </div>
+  </main>
+  <footer class="site-footer">
+    <p><a href="terms.html">利用規約・削除依頼について</a></p>
+    <p>&copy; 2026 ひまちゃんねる</p>
+  </footer>
+</div>
+<script src="api.js"></script>
+<script>
+(async function () {
+  const el = document.getElementById("boards");
+  try {
+    const { boards } = await apiGet("/api/boards");
+    el.innerHTML = boards
+      .map(
+        (b) => `<a class="board-card" href="board.html?b=${encodeURIComponent(b.slug)}">
+          <p class="board-card-name">${b.name}</p>
+          <p class="board-card-desc">${b.description}</p>
+        </a>`
+      )
+      .join("");
+  } catch (e) {
+    el.innerHTML = `<p class="empty-state">読み込みに失敗しました。時間をおいて再度お試しください。</p>`;
+  }
+})();
+</script>
+</body>
+</html>

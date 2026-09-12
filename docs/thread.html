@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title id="page-title">スレッド | ひまちゃんねる</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="site-header">
+    <a class="site-title" href="index.html">ひま<span>ちゃんねる</span></a>
+  </header>
+  <main>
+    <p class="crumb"><a href="index.html">板一覧</a> &gt; <a id="board-link" href="#">板</a></p>
+    <h1 id="thread-title" class="thread-title-h1">読み込み中...</h1>
+
+    <ul id="posts" class="post-list"></ul>
+
+    <section class="panel">
+      <h2>レスを書き込む</h2>
+      <form id="reply-form">
+        <input type="text" name="honeypot" class="honeypot" tabindex="-1" autocomplete="off">
+        <div class="field">
+          <label for="name">名前(空欄で「名無しさん」)</label>
+          <input type="text" id="name" maxlength="30">
+        </div>
+        <div class="field">
+          <label for="body">本文</label>
+          <textarea id="body" maxlength="1000" required></textarea>
+        </div>
+        <button type="submit">書き込む</button>
+        <p id="status" class="form-status"></p>
+      </form>
+    </section>
+  </main>
+  <footer class="site-footer">
+    <p><a href="terms.html">利用規約・削除依頼について</a></p>
+    <p>&copy; 2026 ひまちゃんねる</p>
+  </footer>
+</div>
+<script src="api.js"></script>
+<script>
+const threadId = qs("id");
+
+function renderPosts(posts) {
+  document.getElementById("posts").innerHTML = posts
+    .map(
+      (p, i) => `<li class="post">
+        <div class="post-head">
+          <span class="post-no">${i + 1}</span>
+          <span class="post-name">${p.name}</span>
+          <span>${fmtDate(p.created_at)}</span>
+        </div>
+        <div class="post-body">${p.body}</div>
+        <button class="post-report" data-post-id="${p.id}">通報する</button>
+      </li>`
+    )
+    .join("");
+
+  document.querySelectorAll(".post-report").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const reason = prompt("通報理由を入力してください(削除依頼として運営に届きます)");
+      if (reason === null) return;
+      try {
+        await apiPost("/api/reports", { post_id: Number(btn.dataset.postId), reason });
+        alert("通報を受け付けました。");
+      } catch (e) {
+        alert("通報の送信に失敗しました。");
+      }
+    });
+  });
+}
+
+async function loadThread() {
+  try {
+    const { thread, board, posts } = await apiGet(`/api/threads/${threadId}`);
+    document.title = `${thread.title} | ひまちゃんねる`;
+    document.getElementById("thread-title").textContent = thread.title;
+    document.getElementById("board-link").textContent = board ? board.name : "板";
+    document.getElementById("board-link").href = board ? `board.html?b=${board.slug}` : "index.html";
+    renderPosts(posts);
+  } catch (e) {
+    document.getElementById("thread-title").textContent = "スレッドが見つかりません";
+  }
+}
+
+document.getElementById("reply-form").addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const statusEl = document.getElementById("status");
+  const name = document.getElementById("name").value.trim();
+  const body = document.getElementById("body").value.trim();
+  const honeypot = document.querySelector('[name="honeypot"]').value;
+
+  statusEl.textContent = "投稿中...";
+  statusEl.className = "form-status";
+  try {
+    await apiPost(`/api/threads/${threadId}/posts`, { name, body, honeypot });
+    document.getElementById("body").value = "";
+    statusEl.textContent = "";
+    await loadThread();
+  } catch (e) {
+    statusEl.textContent = e.message;
+    statusEl.className = "form-status error";
+  }
+});
+
+loadThread();
+</script>
+</body>
+</html>

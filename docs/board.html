@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title id="page-title">板 | ひまちゃんねる</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="site-header">
+    <a class="site-title" href="index.html">ひま<span>ちゃんねる</span></a>
+  </header>
+  <main>
+    <p class="crumb"><a href="index.html">板一覧</a> &gt; <span id="board-name">読み込み中...</span></p>
+
+    <ul id="threads" class="thread-list">
+      <li><a href="#">読み込み中...</a></li>
+    </ul>
+
+    <section class="panel">
+      <h2>新しいスレッドを立てる</h2>
+      <form id="new-thread-form">
+        <input type="text" name="honeypot" class="honeypot" tabindex="-1" autocomplete="off">
+        <div class="field">
+          <label for="title">タイトル</label>
+          <input type="text" id="title" maxlength="100" required>
+        </div>
+        <div class="field">
+          <label for="name">名前(空欄で「名無しさん」)</label>
+          <input type="text" id="name" maxlength="30">
+        </div>
+        <div class="field">
+          <label for="body">本文</label>
+          <textarea id="body" maxlength="1000" required></textarea>
+        </div>
+        <button type="submit">スレッドを立てる</button>
+        <p id="status" class="form-status"></p>
+      </form>
+    </section>
+  </main>
+  <footer class="site-footer">
+    <p><a href="terms.html">利用規約・削除依頼について</a></p>
+    <p>&copy; 2026 ひまちゃんねる</p>
+  </footer>
+</div>
+<script src="api.js"></script>
+<script>
+const boardSlug = qs("b");
+
+async function loadThreads() {
+  const listEl = document.getElementById("threads");
+  try {
+    const { board, threads } = await apiGet(`/api/boards/${encodeURIComponent(boardSlug)}/threads`);
+    document.title = `${board.name} | ひまちゃんねる`;
+    document.getElementById("board-name").textContent = board.name;
+
+    if (threads.length === 0) {
+      listEl.innerHTML = `<li><p class="empty-state" style="padding:14px">まだスレッドがありません。最初のスレッドを立ててみましょう。</p></li>`;
+      return;
+    }
+    listEl.innerHTML = threads
+      .map(
+        (t) => `<li><a href="thread.html?id=${t.id}">
+          <span class="thread-title">${t.title}</span>
+          <span class="thread-meta">${t.post_count}レス ・ ${fmtDate(t.last_reply_at)}</span>
+        </a></li>`
+      )
+      .join("");
+  } catch (e) {
+    listEl.innerHTML = `<li><p class="empty-state" style="padding:14px">板が見つからないか、読み込みに失敗しました。</p></li>`;
+  }
+}
+
+document.getElementById("new-thread-form").addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const statusEl = document.getElementById("status");
+  const title = document.getElementById("title").value.trim();
+  const name = document.getElementById("name").value.trim();
+  const body = document.getElementById("body").value.trim();
+  const honeypot = document.querySelector('[name="honeypot"]').value;
+
+  statusEl.textContent = "投稿中...";
+  statusEl.className = "form-status";
+  try {
+    const res = await apiPost(`/api/boards/${encodeURIComponent(boardSlug)}/threads`, { title, name, body, honeypot });
+    location.href = `thread.html?id=${res.id}`;
+  } catch (e) {
+    statusEl.textContent = e.message;
+    statusEl.className = "form-status error";
+  }
+});
+
+loadThreads();
+</script>
+</body>
+</html>
